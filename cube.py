@@ -42,16 +42,6 @@ class Cube(object):
             [np.tile(i, (self.N, self.N)) for i in range(6)])
         return None
 
-    def turn(self, f, d):
-        """
-        Turn whole cube (without making a layer move) around face `f`
-        `d` 90-degree turns in the clockwise direction.  Use `d=3` or
-        `d=-1` for counter-clockwise.
-        """
-        for l in range(self.N):
-            self.move(f, l, d)
-        return None
-
     def move(self, f, l, d):
         """
         Make a layer move of layer `l` parallel to face `f` through
@@ -125,12 +115,16 @@ class Cube(object):
             self.move(f, l, d)
         return None
 
+    def finish(self,):
+        if np.array_equal(self.stickers, np.array([np.tile(i, (self.N, self.N)) for i in range(6)])):
+            return True
+        return False
 
 # TESTING
 if __name__ == "__main__":
     np.random.seed(42)
     c = Cube(6)
-    c.turn("U", 1)
     c.move("U", 0, -1)
     c.move("U", 0, 1)
     c.randomize(5)
+    c.finish()
