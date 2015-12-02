@@ -116,9 +116,8 @@ class Cube(object):
         return None
 
     def finish(self,):
-        if np.array_equal(self.stickers, np.array([np.tile(i, (self.N, self.N)) for i in range(6)])):
-            return True
-        return False
+        return np.array_equal(self.stickers, np.array([np.tile(i, (self.N, self.N)) for i in range(6)]))
+        
 
 # TESTING
 if __name__ == "__main__":

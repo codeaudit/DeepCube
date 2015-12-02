@@ -9,7 +9,9 @@ class Environment(Object):
         self.cube = Cube(N)
         self.cube.randomize(rand_nb)
 
-    # Make a move and checks if the cube is ok
+    # Make a move and get a reward:
+    # 0 is the cube is not finish
+    # 1 is the cube is done
     def action(self, f, l, d):
         self.cube.move(f, l, d)
         return self.cube.finish()
