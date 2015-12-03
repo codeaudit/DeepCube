@@ -34,23 +34,26 @@ class Cube(object):
     - optional `whiteplastic=True` if you like white cubes
     """
     facedict = {"U": 0, "D": 1, "F": 2, "B": 3, "R": 4, "L": 5}
+    inv_facedict = {0, "U", 1: "D", 2: "F", 3: "B", 4: "R", 5: "L"}
     dictface = dict([(v, k) for k, v in facedict.items()])
 
     def __init__(self, N):
         self.N = N
         self.stickers = np.array(
             [np.tile(i, (self.N, self.N)) for i in range(6)])
-        return None
 
-    def move(self, f, l, d):
+    def move(self, i, l, d):
         """
-        Make a layer move of layer `l` parallel to face `f` through
+        Make a layer move of layer `l` parallel to face `inv_facedict[f]` through
         `d` 90-degree turns in the clockwise direction.  Layer `0` is
         the face itself, and higher `l` values are for layers deeper
         into the cube.  Use `d=3` or `d=-1` for counter-clockwise
         moves, and `d=2` for a 180-degree move..
+        i is in range(6)
+        l is in range(N)
+        d is in range(1, 4)
         """
-        i = self.facedict[f]
+        f = inv_facedict[i]
         l2 = self.N - 1 - l
         assert l < self.N
         ds = range((d + 4) % 4)
@@ -117,7 +120,7 @@ class Cube(object):
 
     def finish(self,):
         return np.array_equal(self.stickers, np.array([np.tile(i, (self.N, self.N)) for i in range(6)]))
-        
+
 
 # TESTING
 if __name__ == "__main__":

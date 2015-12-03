@@ -18,7 +18,7 @@ logging.basicConfig(level='INFO')
 logger = logging.getLogger(__name__)
 
 
-def build_model_mlp(args, dtype=floatX):
+def build_model(args, dtype=floatX):
     logger.info('Building model ...')
 
     # Variables of the model
@@ -26,7 +26,7 @@ def build_model_mlp(args, dtype=floatX):
     x = tensor.fmatrix("x")
 
     # the action taken
-    action = tensor.fvector("action")
+    action = tensor.fmatrix("action")
 
     # y is the reward (Batch,)
     y = tensor.fvector("y")
@@ -35,7 +35,6 @@ def build_model_mlp(args, dtype=floatX):
     # MLP
     #####
     # Concatenate inputs :
-    action = action.dimshuffle(0, "x")
     mlp_input = tensor.concatenate((x, action), axis=1)
 
     # Bricks
@@ -54,13 +53,28 @@ def build_model_mlp(args, dtype=floatX):
     mlp = MLP(activations=activations, dims=dims)
 
     y_hat = mlp.apply(mlp_input)
-    y_hat.name = "y_hat"
-    cost = SquaredError().apply(y, y_hat)
 
+    cost = SquaredError().apply(y, y_hat)
     cost.name = "mean_squared_error"
 
+    # Initialization
     mlp.weights_init = initialization.IsotropicGaussian(0.1)
     mlp.biases_init = initialization.Constant(0)
     mlp.initialize()
 
-    return cost
+    # Q function
+    # Check if the parameters in this function will change through
+    # the updates of the gradient descent
+    Q = theano.function(inputs=[x, action], outputs=y_hat)
+
+    # Cost, gradient and learning rate
+    lr = T.scalar('lr')
+    params = CompuatationGraph(cost).parameters
+    gradients = T.grad(cost, params)
+    updates = OrderedDict((p, p - lr * g) for p, g in zip(params, gradients))
+
+    # Function to call to perfom a gradient descent on (y - Q)^2
+    gradient_descent_step = theano.function([x, action, y, lr], cost, updates=updates) 
+
+
+    return Q, gradient_descent_step
