@@ -1,4 +1,5 @@
 import logging
+from collections import OrderedDict
 
 import numpy as np
 import theano
@@ -7,7 +8,6 @@ from theano import tensor
 from blocks import initialization
 from blocks.bricks import MLP, Rectifier
 from blocks.bricks.cost import SquaredError
-
 from blocks.filter import VariableFilter, get_brick
 from blocks.graph import ComputationGraph
 from blocks.model import Model
@@ -41,7 +41,7 @@ def build_model(args, dtype=floatX):
     l = args.layers
     activations = []
     # first layer dimension
-    dims = [6 * 9 + 1]
+    dims = [6 * (args.cube_size ** 2) + 3]
 
     # every hidden layer dimension and activation function
     for _ in range(l):
@@ -54,7 +54,7 @@ def build_model(args, dtype=floatX):
 
     y_hat = mlp.apply(mlp_input)
 
-    cost = SquaredError().apply(y, y_hat)
+    cost = SquaredError().apply(y.dimshuffle(0, "x"), y_hat)
     cost.name = "mean_squared_error"
 
     # Initialization
@@ -65,16 +65,17 @@ def build_model(args, dtype=floatX):
     # Q function
     # Check if the parameters in this function will change through
     # the updates of the gradient descent
-    Q = theano.function(inputs=[x, action], outputs=y_hat)
+    Q = theano.function(inputs=[x, action],
+                        outputs=y_hat, allow_input_downcast=True)
 
     # Cost, gradient and learning rate
-    lr = T.scalar('lr')
-    params = CompuatationGraph(cost).parameters
-    gradients = T.grad(cost, params)
+    lr = tensor.scalar('lr')
+    params = ComputationGraph(cost).parameters
+    gradients = tensor.grad(cost, params)
     updates = OrderedDict((p, p - lr * g) for p, g in zip(params, gradients))
 
     # Function to call to perfom a gradient descent on (y - Q)^2
-    gradient_descent_step = theano.function([x, action, y, lr], cost, updates=updates) 
-
+    gradient_descent_step = theano.function(
+        [x, action, y, lr], cost, updates=updates, allow_input_downcast=True)
 
     return Q, gradient_descent_step

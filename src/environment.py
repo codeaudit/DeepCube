@@ -1,10 +1,10 @@
 #! /usr/bin/env python2
 import numpy as np
 
-from cube import cube
+from cube import Cube
 
 
-class Environment(Object):
+class Environment(object):
 
     # Initialize a random cube
     def __init__(self, N, rand_nb):

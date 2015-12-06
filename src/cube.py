@@ -34,7 +34,7 @@ class Cube(object):
     - optional `whiteplastic=True` if you like white cubes
     """
     facedict = {"U": 0, "D": 1, "F": 2, "B": 3, "R": 4, "L": 5}
-    inv_facedict = {0, "U", 1: "D", 2: "F", 3: "B", 4: "R", 5: "L"}
+    inv_facedict = {0: "U", 1: "D", 2: "F", 3: "B", 4: "R", 5: "L"}
     dictface = dict([(v, k) for k, v in facedict.items()])
 
     def __init__(self, N):
@@ -53,7 +53,7 @@ class Cube(object):
         l is in range(N)
         d is in range(1, 4)
         """
-        f = inv_facedict[i]
+        f = self.inv_facedict[i]
         l2 = self.N - 1 - l
         assert l < self.N
         ds = range((d + 4) % 4)
@@ -66,7 +66,7 @@ class Cube(object):
                               (self.facedict["B"], range(self.N), l2),
                               (self.facedict["L"], range(self.N), l2)])
         if f == "D":
-            return self.move("U", l2, -d)
+            return self.move(self.facedict["U"], l2, -d)
         if f == "F":
             f2 = "B"
             i2 = self.facedict[f2]
@@ -76,7 +76,7 @@ class Cube(object):
                               (self.facedict["D"], range(self.N)[::-1], l2),
                               (self.facedict["R"], l, range(self.N)[::-1])])
         if f == "B":
-            return self.move("F", l2, -d)
+            return self.move(self.facedict["F"], l2, -d)
         if f == "R":
             f2 = "L"
             i2 = self.facedict[f2]
@@ -86,7 +86,7 @@ class Cube(object):
                               (self.facedict["D"], l2, range(self.N)),
                               (self.facedict["B"], l, range(self.N)[::-1])])
         if f == "L":
-            return self.move("R", l2, -d)
+            return self.move(self.facedict["R"], l2, -d)
         for d in ds:
             if l == 0:
                 self.stickers[i] = np.rot90(self.stickers[i], 3)
@@ -112,7 +112,7 @@ class Cube(object):
         Make `number` randomly chosen moves to scramble the cube.
         """
         for _ in range(number):
-            f = self.dictface[np.random.randint(6)]
+            f = np.random.randint(6)
             l = np.random.randint(self.N)
             d = 1 + np.random.randint(3)
             self.move(f, l, d)
@@ -126,7 +126,7 @@ class Cube(object):
 if __name__ == "__main__":
     np.random.seed(42)
     c = Cube(6)
-    c.move("U", 0, -1)
-    c.move("U", 0, 1)
+    c.move(0, 0, -1)
+    c.move(1, 0, 1)
     c.randomize(5)
     c.finish()

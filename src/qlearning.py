@@ -1,36 +1,66 @@
-from model import build_model
-from utils import parse_args
+#!/usr/bin/env python2
+import numpy as np
+
 from environment import Environment
+from model import build_model
+from utils import parse_args, _permutation
 
 
-def sample_minibatch(replay_memory):
-    # TODO
-    pass
+# TODO handle when the replay_memory is empty at the beginning
+def sample_minibatch(replay_memory, minibatch_size, N):
+    """
+    returns [x_t, a, r, x_tp1] where
+    x_t and x_tp1 are 4D (batch, 3D of the cube)
+    a is 2D (batch, actions)
+    r is 1D (batch,)
+    """
+
+    l = len(replay_memory)
+    perm = _permutation(l)
+    minibatch_indices = perm[:minibatch_size]
+
+    x_t = np.zeros((minibatch_size, 6, N, N))
+    a = np.zeros((minibatch_size, 3))
+    r = np.zeros((minibatch_size,))
+    x_tp1 = np.zeros((minibatch_size, 6, N, N))
+
+    for i, minibatch_index in enumerate(minibatch_indices):
+        example = replay_memory[minibatch_index]
+        x_t[i, :, :, :] = example[0]
+        a[i, :] = example[1]
+        r[i] = example[2]
+        x_tp1[i, :, :, :] = example[3]
+
+    return [x_t, a, r, x_tp1]
 
 
 # Given an x, returns the action a such that Q(x, a) is maximal
-class max_action_Q:
+class max_action_Q(object):
 
-    def __init__(N):
+    def __init__(self, N):
         possible_actions = []
         for i in range(6):
             for l in range(N):
                 for d in range(1, 4):
-                    possbile_actions.append([i, l, , d])
+                    possible_actions.append(np.array([i, l, d])[None, :])
         self.possible_actions = possible_actions
 
-    def __call__(x):
-        max_q = 0
-        for a in possible_actions:
+    def __call__(self, x):
+        flag_first = True
+        for a in self.possible_actions:
             temp = Q(x, a)
+            if flag_first:
+                flag_first = False
+                max_q = temp
+                max_a = a
             if temp > max_q:
                 max_a = a
                 max_q = temp
-        return max_a
+        return max_a, max_q
 
 # The Deep Q learning algorithm is the following
 if __name__ == "__main__":
-    args = parse_args
+    args = parse_args()
     M = args.nb_episode  # Number of considered episodes
     T = args.steps_in_episode  # Number of steps in an episode
 
@@ -44,12 +74,14 @@ if __name__ == "__main__":
 
     lr = args.learning_rate
 
+    mb_size = args.mini_batch_size  # The minibatch size
+
     # Initialize the Replay_Memory:
     replay_memory = []
 
     # Initialize Q: function of the Neural Network
     Q, gradient_descent_step = build_model(args)
-    max_action_Q = max_action_Q(N)
+    max_action = max_action_Q(N)
 
     for episode in range(M):
         # Initialize a random cube
@@ -62,38 +94,45 @@ if __name__ == "__main__":
             # Select random action with probability eps
             # Or select action that maximize Q(x_t, a)
             # Execute the action and get reward
-            r = numpy.random.uniform(0., 1., 1)
+            r = np.random.uniform(0., 1., 1)
             if r < eps:
                 action = env.random_action()
             else:
-                action = max_actions_Q(env.get_state())
+                stickers = env.get_state()
+                stickers = stickers.flatten()
+                stickers = stickers[None, :]
+                action = max_action(stickers)[0][0, :]
 
+            print action
             reward = env.perform_action(action)
 
             x_tp1 = env.get_state()
 
             # Store transition s_t, a_t, r_t, s_t+1 in the Replay_Memory
             replay_memory.append([x_t, action, reward, x_tp1])
+            # If the replay_memory is not big enought to take a minibatch
+            if len(replay_memory) < mb_size:
+                continue
 
             # Sample some mini-batches of the Replay_Memory
-            # x_t and x_tp1 are (N+1)D matrices (batch, N dimensions of cube)
+            # x_t and x_tp1 are 4D matrices (batch, 3D of the cube)
             # a is 2 D (batch, actions)
             # r is 1 D (batch,)
-            x_t, a, r, x_tp1 = sample_minibatch(replay_memory)
-
-            # Make x 2d (batch, feature)
-            x_t = np.reshape(x_t.shape[0], -1)
-            x_tp1 = np.reshape(x_tp1.shape[0], -1)
+            [x_t, a, r, x_tp1] = sample_minibatch(replay_memory, mb_size, N)
+            # Make x 2d (batch, flattened cube)
+            x_t = x_t.reshape(x_t.shape[0], 6 * (N ** 2))
+            x_tp1 = x_tp1.reshape(x_tp1.shape[0], 6 * (N ** 2))
 
             # Compute y_j for all j in the minibatch
             # y_j = r_j if the state x_t+1 is terminal (r_j = 1)
             # y_j = r_j + gamma * max_actions_Q(Q(x_t_j+1, actions))
-            y = np.zeros(x_t.shape[0],)
-            for j in range(x_t.shape[0]):
-                if r_j == 1.:
-                    y[j] = r_j
+            y = np.zeros(mb_size,)
+            for j in range(mb_size):
+                if r[j] == 1.:
+                    y[j] = r[j]
                 else:
-                    y[j] = r_j + gamma * max_actions_Q(x_tp1[j])
+                    _, max_q = max_action(x_tp1[j, :][None, :])
+                    y[j] = r[j] + gamma * max_q
 
             # Compute a gradient step on (y - Q(x, a))^2
             cost = gradient_descent_step(x_t, a, y, lr)
