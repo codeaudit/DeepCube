@@ -1,4 +1,5 @@
 import argparse
+import cPickle
 import logging
 
 import numpy as np
@@ -13,7 +14,7 @@ def parse_args():
     # Game options
     # Number of cubies on each edge of the big cube (standard is 3)
     parser.add_argument('--cube_size', type=int,
-                        default=3)
+                        default=2)
 
     # Qlearning options
     # The number of permutations from a finished cube to get the initial cube
@@ -24,9 +25,9 @@ def parse_args():
     parser.add_argument('--gamma', type=float,
                         default=0.9)    # The discount
     parser.add_argument('--nb_episode', type=int,
-                        default=50)     # Number of considered episodes
+                        default=5000)     # Number of considered episodes
     parser.add_argument('--steps_in_episode', type=int,
-                        default=40)     # Number of steps in an episode
+                        default=4)     # Number of steps in an episode
 
     # Model options
     parser.add_argument('--layers', type=int,
@@ -38,7 +39,7 @@ def parse_args():
     parser.add_argument('--load_path', type=str,
                         default=None)
     parser.add_argument('--save_path', type=str,
-                        default="trained_models/")
+                        default=None)
 
     # Training options
     parser.add_argument('--algorithm', choices=['rms_prop', 'adam', 'sgd'],
@@ -72,3 +73,16 @@ def _permutation(n):
     r = np.arange(n, dtype=np.uint32)
     np.random.shuffle(r)
     return r
+
+
+def save(params, save_path):
+    with open(save_path, 'wb') as save_file:
+        for param in params:
+            cPickle.dump(param.get_value(borrow=True), save_file, -1)
+
+
+def load(params, load_path):
+    with open('path') as save_file:
+        for param in params:
+            param.set_value(cPickle.load(save_file), borrow=True)
+    return params

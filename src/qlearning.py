@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+import sys
 import numpy as np
 
 from environment import Environment
@@ -6,7 +7,6 @@ from model import build_model
 from utils import parse_args, _permutation
 
 
-# TODO handle when the replay_memory is empty at the beginning
 def sample_minibatch(replay_memory, minibatch_size, N):
     """
     returns [x_t, a, r, x_tp1] where
@@ -80,9 +80,12 @@ if __name__ == "__main__":
     replay_memory = []
 
     # Initialize Q: function of the Neural Network
-    Q, gradient_descent_step = build_model(args)
+    Q, gradient_descent_step, params = build_model(args)
     max_action = max_action_Q(N)
 
+    # Printing
+    current_episode_century = 0
+    count = 0
     for episode in range(M):
         # Initialize a random cube
         env = Environment(N, rand_nb)
@@ -90,7 +93,8 @@ if __name__ == "__main__":
         finish = False
         t = 0
         while (t < T) and not finish:
-            x_t = env.get_state()
+            x_t = np.copy(env.get_state())
+
             # Select random action with probability eps
             # Or select action that maximize Q(x_t, a)
             # Execute the action and get reward
@@ -101,10 +105,23 @@ if __name__ == "__main__":
                 stickers = env.get_state()
                 stickers = stickers.flatten()
                 stickers = stickers[None, :]
-                action = max_action(stickers)[0][0, :]
+                action, max_q = max_action(stickers)
+                action = action[0, :]
 
-            print action
             reward = env.perform_action(action)
+            if reward:
+                finish = True
+
+            # Printing
+            if reward:
+                if current_episode_century == (episode / 100):
+                    count += 1
+                else:
+                    count = 1
+                    current_episode_century = (episode / 100)
+                    print ""
+                sys.stdout.write("%d : score = %d\r" % (episode / 100, count))
+                sys.stdout.flush()
 
             x_tp1 = env.get_state()
 
@@ -138,3 +155,6 @@ if __name__ == "__main__":
             cost = gradient_descent_step(x_t, a, y, lr)
 
             t += 1
+
+    if args.save_path is not None:
+        save(params, args.save_path)

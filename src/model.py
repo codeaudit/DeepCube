@@ -78,4 +78,4 @@ def build_model(args, dtype=floatX):
     gradient_descent_step = theano.function(
         [x, action, y, lr], cost, updates=updates, allow_input_downcast=True)
 
-    return Q, gradient_descent_step
+    return Q, gradient_descent_step, params

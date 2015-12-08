@@ -1,0 +1,3 @@
+give reward if we are going "towards" the solution and not only on the final state
+Curriculum learning
+Make epsilon vary (lots of exploraion in the beginning then less and less)
