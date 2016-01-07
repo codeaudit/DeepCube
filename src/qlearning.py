@@ -6,6 +6,9 @@ from environment import Environment
 from model import build_model
 from utils import parse_args, _permutation
 
+# TODO: make input integers8
+# TODO: shift the value for action
+
 
 def sample_minibatch(replay_memory, minibatch_size, N):
     """
@@ -19,10 +22,10 @@ def sample_minibatch(replay_memory, minibatch_size, N):
     perm = _permutation(l)
     minibatch_indices = perm[:minibatch_size]
 
-    x_t = np.zeros((minibatch_size, 6, N, N))
-    a = np.zeros((minibatch_size, 3))
+    x_t = np.zeros((minibatch_size, 6, N, N)).astype(np.int8)
+    a = np.zeros((minibatch_size, 3)).astype(np.int8)
     r = np.zeros((minibatch_size,))
-    x_tp1 = np.zeros((minibatch_size, 6, N, N))
+    x_tp1 = np.zeros((minibatch_size, 6, N, N)).astype(np.int8)
 
     for i, minibatch_index in enumerate(minibatch_indices):
         example = replay_memory[minibatch_index]
@@ -42,7 +45,11 @@ class max_action_Q(object):
         for i in range(6):
             for l in range(N):
                 for d in range(1, 4):
-                    possible_actions.append(np.array([i, l, d])[None, :])
+                    # Carefull: the action value are shifted 
+                    # for the lookupTable
+                    possible_actions.append(np.array([i,
+                                                     l + 6,
+                                                     d + 6 + N - 1])[None, :])
         self.possible_actions = possible_actions
         self.Q = Q
 
@@ -91,9 +98,9 @@ if __name__ == "__main__":
         # Initialize a random cube
         env = Environment(N, rand_nb)
 
-        finish = False
+        finish_episode = False
         t = 0
-        while (t < T) and not finish:
+        while (t < T) and not finish_episode:
             x_t = np.copy(env.get_state())
 
             # Select random action with probability eps
@@ -109,9 +116,13 @@ if __name__ == "__main__":
                 action, max_q = max_action(stickers)
                 action = action[0, :]
 
+                # Shift back the action
+                action[1] += -6
+                action[2] += -6 - N + 1
+
             reward = env.perform_action(action)
             if reward:
-                finish = True
+                finish_episode = True
 
             # Printing
             if reward:
@@ -127,7 +138,11 @@ if __name__ == "__main__":
             x_tp1 = env.get_state()
 
             # Store transition s_t, a_t, r_t, s_t+1 in the Replay_Memory
+            # The shifted action is stored
+            action[1] += 6
+            action[2] += 6 + N - 1
             replay_memory.append([x_t, action, reward, x_tp1])
+
             # If the replay_memory is not big enought to take a minibatch
             if len(replay_memory) < mb_size:
                 continue

@@ -8,6 +8,7 @@ from theano import tensor
 from blocks import initialization
 from blocks.bricks import MLP, Rectifier
 from blocks.bricks.cost import SquaredError
+from blocks.bricks.lookup import LookupTable
 from blocks.filter import VariableFilter, get_brick
 from blocks.graph import ComputationGraph
 from blocks.model import Model
@@ -23,25 +24,40 @@ def build_model(args, dtype=floatX):
 
     # Variables of the model
     # the rubik's cube stickers
-    x = tensor.fmatrix("x")
+    x = tensor.bmatrix("x")
 
     # the action taken
-    action = tensor.fmatrix("action")
+    action = tensor.bmatrix("action")
 
     # y is the reward (Batch,)
     y = tensor.fvector("y")
 
     #####
+    # LookupTable
+    #####
+    lookup_x = LookupTable(length=6, dim=args.embed_dim)
+    lookup_action = LookupTable(length=6 + args.cube_size + 3, dim=args.embed_dim)
+
+    x_embeded = lookup_x.apply(x)
+    action_embeded = lookup_action.apply(action)
+
+    #####
     # MLP
     #####
+    # Make x_embeded and action_embeded 2D
+    x_embeded = x_embeded.reshape((x_embeded.shape[0],
+                                  x_embeded.shape[1] * x_embeded.shape[2]))
+    action_embeded = action_embeded.reshape((action_embeded.shape[0],
+                                            action_embeded.shape[1] * action_embeded.shape[2]))
+
     # Concatenate inputs :
-    mlp_input = tensor.concatenate((x, action), axis=1)
+    mlp_input = tensor.concatenate((x_embeded, action_embeded), axis=1)
 
     # Bricks
     l = args.layers
     activations = []
     # first layer dimension
-    dims = [6 * (args.cube_size ** 2) + 3]
+    dims = [args.embed_dim * (6 * (args.cube_size ** 2) + 3)]
 
     # every hidden layer dimension and activation function
     for _ in range(l):

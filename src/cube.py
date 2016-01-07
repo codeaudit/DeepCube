@@ -39,7 +39,7 @@ class Cube(object):
     def __init__(self, N):
         self.N = N
         self.stickers = np.array(
-            [np.tile(i, (self.N, self.N)) for i in range(6)])
+            [np.tile(i, (self.N, self.N)).astype(np.int8) for i in range(6)])
 
     def move(self, i, l, d):
         """

@@ -30,6 +30,8 @@ def parse_args():
                         default=4)     # Number of steps in an episode
 
     # Model options
+    parser.add_argument('--embed_dim', type=int,
+                        default=2)   # The dimension of the embedding for every color
     parser.add_argument('--layers', type=int,
                         default=2)
     parser.add_argument('--units_per_layer', type=int,
