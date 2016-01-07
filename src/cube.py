@@ -31,7 +31,6 @@ class Cube(object):
     ----
     Initialize with arguments:
     - `N`, the side length (the cube is `N`x`N`x`N`)
-    - optional `whiteplastic=True` if you like white cubes
     """
     facedict = {"U": 0, "D": 1, "F": 2, "B": 3, "R": 4, "L": 5}
     inv_facedict = {0: "U", 1: "D", 2: "F", 3: "B", 4: "R", 5: "L"}

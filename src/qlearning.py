@@ -37,18 +37,19 @@ def sample_minibatch(replay_memory, minibatch_size, N):
 # Given an x, returns the action a such that Q(x, a) is maximal
 class max_action_Q(object):
 
-    def __init__(self, N):
+    def __init__(self, N, Q):
         possible_actions = []
         for i in range(6):
             for l in range(N):
                 for d in range(1, 4):
                     possible_actions.append(np.array([i, l, d])[None, :])
         self.possible_actions = possible_actions
+        self.Q = Q
 
     def __call__(self, x):
         flag_first = True
         for a in self.possible_actions:
-            temp = Q(x, a)
+            temp = self.Q(x, a)
             if flag_first:
                 flag_first = False
                 max_q = temp
@@ -81,7 +82,7 @@ if __name__ == "__main__":
 
     # Initialize Q: function of the Neural Network
     Q, gradient_descent_step, params = build_model(args)
-    max_action = max_action_Q(N)
+    max_action = max_action_Q(N, Q)
 
     # Printing
     current_episode_century = 0

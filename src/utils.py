@@ -21,7 +21,7 @@ def parse_args():
     parser.add_argument('--rand_nb', type=int,
                         default=1)
     parser.add_argument('--epsilon', type=float,
-                        default=0.1)    # The probability of taking a random moves
+                        default=0.1)    # The probability of taking a random move
     parser.add_argument('--gamma', type=float,
                         default=0.9)    # The discount
     parser.add_argument('--nb_episode', type=int,
@@ -31,9 +31,9 @@ def parse_args():
 
     # Model options
     parser.add_argument('--layers', type=int,
-                        default=4)
+                        default=2)
     parser.add_argument('--units_per_layer', type=int,
-                        default=100)
+                        default=50)
 
     # Serialization options
     parser.add_argument('--load_path', type=str,
