@@ -2,12 +2,10 @@
 import sys
 import numpy as np
 
+from cube import Cube
 from environment import Environment
 from model import build_model
 from utils import parse_args, _permutation
-
-# TODO: make input integers8
-# TODO: shift the value for action
 
 
 def sample_minibatch(replay_memory, minibatch_size, N):
@@ -45,11 +43,11 @@ class max_action_Q(object):
         for i in range(6):
             for l in range(N):
                 for d in range(1, 4):
-                    # Carefull: the action value are shifted 
+                    # Carefull: the action value are shifted
                     # for the lookupTable
                     possible_actions.append(np.array([i,
-                                                     l + 6,
-                                                     d + 6 + N - 1])[None, :])
+                                                      l + 6,
+                                                      d + 6 + N - 1])[None, :])
         self.possible_actions = possible_actions
         self.Q = Q
 
@@ -97,6 +95,23 @@ if __name__ == "__main__":
     for episode in range(M):
         # Initialize a random cube
         env = Environment(N, rand_nb)
+
+        # TODO : this current code works with only one move away for the solution
+        # Show good examples in the replay memory with probability
+        # good_examples
+        r = np.random.uniform(0., 1., 1)
+        if r < args.good_examples:
+            # Find the good action to perform
+            x_t = np.copy(env.get_state())
+            for action in max_action.possible_actions:
+                cube = Cube(stickers=x_t)
+                action = action[0]
+                cube.move(action[0], action[1] - 6, action[2] - 6 - N + 1)
+                if cube.finish():
+                    good_action = action
+                    break
+            replay_memory.append([x_t, good_action, 1, np.array(
+                [np.tile(i, (N, N)) for i in range(6)])])
 
         finish_episode = False
         t = 0

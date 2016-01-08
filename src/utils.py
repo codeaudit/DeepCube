@@ -14,20 +14,22 @@ def parse_args():
     # Game options
     # Number of cubies on each edge of the big cube (standard is 3)
     parser.add_argument('--cube_size', type=int,
-                        default=2)
+                        default=1)
 
     # Qlearning options
     # The number of permutations from a finished cube to get the initial cube
     parser.add_argument('--rand_nb', type=int,
                         default=1)
     parser.add_argument('--epsilon', type=float,
-                        default=0.1)    # The probability of taking a random move
+                        default=0.2)    # The probability of taking a random move
     parser.add_argument('--gamma', type=float,
                         default=0.9)    # The discount
     parser.add_argument('--nb_episode', type=int,
                         default=5000)     # Number of considered episodes
     parser.add_argument('--steps_in_episode', type=int,
                         default=4)     # Number of steps in an episode
+    parser.add_argument('--good_examples', type=float,
+                        default=0.8)
 
     # Model options
     parser.add_argument('--embed_dim', type=int,

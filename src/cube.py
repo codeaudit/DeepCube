@@ -36,10 +36,14 @@ class Cube(object):
     inv_facedict = {0: "U", 1: "D", 2: "F", 3: "B", 4: "R", 5: "L"}
     dictface = dict([(v, k) for k, v in facedict.items()])
 
-    def __init__(self, N):
-        self.N = N
-        self.stickers = np.array(
-            [np.tile(i, (self.N, self.N)).astype(np.int8) for i in range(6)])
+    def __init__(self, N=None, stickers=None):
+        if stickers is None:
+            self.N = N
+            self.stickers = np.array(
+                [np.tile(i, (self.N, self.N)).astype(np.int8) for i in range(6)])
+        else:
+            self.N = stickers.shape[1]
+            self.stickers = stickers            
 
     def move(self, i, l, d):
         """

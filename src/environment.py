@@ -9,7 +9,7 @@ class Environment(object):
     # Initialize a random cube
     def __init__(self, N, rand_nb):
         self.N = N
-        self.cube = Cube(N)
+        self.cube = Cube(N=N)
         self.cube.randomize(rand_nb)
 
     # Make a move and get a reward:
