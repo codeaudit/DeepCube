@@ -38,6 +38,13 @@ def build_model(args, dtype=floatX):
     lookup_x = LookupTable(length=6, dim=args.embed_dim)
     lookup_action = LookupTable(length=6 + args.cube_size + 3, dim=args.embed_dim)
 
+    lookup_x.weights_init = initialization.IsotropicGaussian(0.1)
+    lookup_x.biases_init = initialization.Constant(0)
+    lookup_action.weights_init = initialization.IsotropicGaussian(0.1)
+    lookup_action.biases_init = initialization.Constant(0)
+    lookup_x.initialize()
+    lookup_action.initialize()
+
     x_embeded = lookup_x.apply(x)
     action_embeded = lookup_action.apply(action)
 

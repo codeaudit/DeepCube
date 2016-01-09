@@ -7,10 +7,13 @@ from cube import Cube
 class Environment(object):
 
     # Initialize a random cube
-    def __init__(self, N, rand_nb):
+    def __init__(self, N, rand_nb=None, fixed_action=None):
         self.N = N
         self.cube = Cube(N=N)
-        self.cube.randomize(rand_nb)
+        if rand_nb is not None:
+            self.cube.randomize(rand_nb)
+        else:
+            self.perform_action(fixed_action)
 
     # Make a move and get a reward:
     # 0 is the cube is not finish

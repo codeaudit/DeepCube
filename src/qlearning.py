@@ -94,23 +94,28 @@ if __name__ == "__main__":
     count = 0
     for episode in range(M):
         # Initialize a random cube
-        env = Environment(N, rand_nb)
+        env = Environment(N, rand_nb=rand_nb)
+        # env = Environment(N, fixed_action=[3, 0, 1])
 
-        # TODO : this current code works with only one move away for the solution
+        # stickers = env.get_state()
+        # stickers = stickers.flatten()
+        # stickers = stickers[None, :]
+        # print Q(stickers, np.array([[3, 0, 3]]))
+
+        # TODO : this current code works with only one move away from the solution
         # Show good examples in the replay memory with probability
         # good_examples
         r = np.random.uniform(0., 1., 1)
         if r < args.good_examples:
             # Find the good action to perform
-            x_t = np.copy(env.get_state())
             for action in max_action.possible_actions:
-                cube = Cube(stickers=x_t)
+                cube = Cube(stickers=np.copy(env.get_state()))
                 action = action[0]
                 cube.move(action[0], action[1] - 6, action[2] - 6 - N + 1)
                 if cube.finish():
                     good_action = action
                     break
-            replay_memory.append([x_t, good_action, 1, np.array(
+            replay_memory.append([np.copy(env.get_state()), good_action, 1, np.array(
                 [np.tile(i, (N, N)) for i in range(6)])])
 
         finish_episode = False
@@ -150,7 +155,7 @@ if __name__ == "__main__":
                 sys.stdout.write("%d : score = %d\r" % (episode / 100, count))
                 sys.stdout.flush()
 
-            x_tp1 = env.get_state()
+            x_tp1 = np.copy(env.get_state())
 
             # Store transition s_t, a_t, r_t, s_t+1 in the Replay_Memory
             # The shifted action is stored
