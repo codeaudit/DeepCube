@@ -7,13 +7,16 @@ from cube import Cube
 class Environment(object):
 
     # Initialize a random cube
-    def __init__(self, N, rand_nb=None, fixed_action=None):
+    def __init__(self, N):
         self.N = N
         self.cube = Cube(N=N)
+
+    def suffle(self, rand_nb=None, fixed_action=None):
         if rand_nb is not None:
-            self.cube.randomize(rand_nb)
-        else:
-            self.perform_action(fixed_action)
+            moves = self.cube.randomize(rand_nb)
+            return moves
+        self.perform_action(fixed_action)
+        return fixed_action
 
     # Make a move and get a reward:
     # 0 is the cube is not finish
@@ -21,7 +24,17 @@ class Environment(object):
     def perform_action(self, action):
         [f, l, d] = action
         self.cube.move(f, l, d)
+        return self.reward()
+
+    def reward(self,):
         return self.cube.finish()
+
+        # if self.cube.finish():
+        #     return 1.
+        # for i in range(6):
+        #     if np.array_equal(self.cube.stickers[i, :, :], i * np.ones((self.N, self.N))):
+        #         return  0.1
+        # return 0.
 
     # Select a random_action
     def random_action(self,):

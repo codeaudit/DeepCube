@@ -1,10 +1,12 @@
 #!/usr/bin/env python2
 import sys
 import numpy as np
+import cPickle
 
-from cube import Cube
+from cube import Cube, reverse_action
 from environment import Environment
 from model import build_model
+from serialization import secure_dump
 from utils import parse_args, _permutation
 
 
@@ -64,6 +66,16 @@ class max_action_Q(object):
                 max_q = temp
         return max_a, max_q
 
+
+def fill_replay_memory(replay_memory, max_replay_memory, episode):
+    if max_replay_memory > len(replay_memory):
+        replay_memory.append(episode)
+    else:
+        i = np.random.randint(0, max_replay_memory)
+        replay_memory[i] = episode
+    return replay_memory
+
+
 # The Deep Q learning algorithm is the following
 if __name__ == "__main__":
     args = parse_args()
@@ -94,29 +106,34 @@ if __name__ == "__main__":
     count = 0
     for episode in range(M):
         # Initialize a random cube
-        env = Environment(N, rand_nb=rand_nb)
-        # env = Environment(N, fixed_action=[3, 0, 1])
+        env = Environment(N)
 
-        # stickers = env.get_state()
-        # stickers = stickers.flatten()
-        # stickers = stickers[None, :]
-        # print Q(stickers, np.array([[3, 0, 3]]))
+        moves = env.suffle(rand_nb=rand_nb)
 
-        # TODO : this current code works with only one move away from the solution
         # Show good examples in the replay memory with probability
-        # good_examples
+        # "good_examples"
         r = np.random.uniform(0., 1., 1)
         if r < args.good_examples:
-            # Find the good action to perform
-            for action in max_action.possible_actions:
-                cube = Cube(stickers=np.copy(env.get_state()))
-                action = action[0]
-                cube.move(action[0], action[1] - 6, action[2] - 6 - N + 1)
-                if cube.finish():
-                    good_action = action
-                    break
-            replay_memory.append([np.copy(env.get_state()), good_action, 1, np.array(
-                [np.tile(i, (N, N)) for i in range(6)])])
+            for i, move in enumerate(reversed(moves)):
+                r_move = reverse_action(move)
+
+                # Make the move
+                if i == 0:
+                    x_t = np.copy(env.get_state())
+                    y_t = np.copy(env.get_state())
+                else:
+                    x_t = np.copy(x_tp1)
+                    y_t = np.copy(x_tp1)
+                cube = Cube(stickers=y_t)
+                cube.move(r_move[0], r_move[1], r_move[2])
+                x_tp1 = np.copy(cube.stickers)
+
+                # Compute reward
+                reward = args.gamma ** (len(moves) - i - 1)
+
+                fill_replay_memory(replay,
+                                   args.max_replay_memory,
+                                   [x_t, r_move, reward, x_tp1])
 
         finish_episode = False
         t = 0
@@ -161,9 +178,13 @@ if __name__ == "__main__":
             # The shifted action is stored
             action[1] += 6
             action[2] += 6 + N - 1
-            replay_memory.append([x_t, action, reward, x_tp1])
 
-            # If the replay_memory is not big enought to take a minibatch
+            # Add the episode to the replay memory
+            replay_memory = fill_replay_memory(replay_memory,
+                                               args.max_replay_memory,
+                                               [x_t, action, reward, x_tp1])
+
+            # If the replay_memory is not big enough to take a minibatch
             if len(replay_memory) < mb_size:
                 continue
 
@@ -193,4 +214,4 @@ if __name__ == "__main__":
             t += 1
 
     if args.save_path is not None:
-        save(params, args.save_path)
+        secure_dump(params, args.save_path)

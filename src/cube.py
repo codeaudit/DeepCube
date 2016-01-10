@@ -20,9 +20,6 @@ conventions
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle
-from matplotlib.patches import Polygon
 
 
 class Cube(object):
@@ -43,7 +40,7 @@ class Cube(object):
                 [np.tile(i, (self.N, self.N)).astype(np.int8) for i in range(6)])
         else:
             self.N = stickers.shape[1]
-            self.stickers = stickers            
+            self.stickers = stickers
 
     def move(self, i, l, d):
         """
@@ -114,15 +111,26 @@ class Cube(object):
         """
         Make `number` randomly chosen moves to scramble the cube.
         """
+        moves = []
         for _ in range(number):
             f = np.random.randint(6)
             l = np.random.randint(self.N)
             d = 1 + np.random.randint(3)
             self.move(f, l, d)
-        return None
+            moves.append([f, l, d])
+        return moves
 
     def finish(self,):
         return np.array_equal(self.stickers, np.array([np.tile(i, (self.N, self.N)) for i in range(6)]))
+
+
+def reverse_action(move):
+    [f, l, d] = move
+    if d == 1:
+        return [f, l, 3]
+    if d == 2:
+        return [f, l, 2]
+    return [f, l, 1]
 
 
 # TESTING

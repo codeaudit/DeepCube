@@ -6,13 +6,13 @@ import theano
 from theano import tensor
 
 from blocks import initialization
-from blocks.bricks import MLP, Rectifier
-from blocks.bricks.cost import SquaredError
-from blocks.bricks.lookup import LookupTable
-from blocks.filter import VariableFilter, get_brick
-from blocks.graph import ComputationGraph
-from blocks.model import Model
-from blocks.serialization import load_parameter_values
+from bricks import MLP, Rectifier
+from cost import SquaredError
+from lookup import LookupTable
+from filter_ import VariableFilter, get_brick
+from graph import ComputationGraph
+from model_ import Model
+from serialization import load_parameter_values
 
 floatX = theano.config.floatX
 logging.basicConfig(level='INFO')
@@ -38,8 +38,10 @@ def build_model(args, dtype=floatX):
     lookup_x = LookupTable(length=6, dim=args.embed_dim)
     lookup_action = LookupTable(length=6 + args.cube_size + 3, dim=args.embed_dim)
 
+    lookup_x.name = "lookup_x"
     lookup_x.weights_init = initialization.IsotropicGaussian(0.1)
     lookup_x.biases_init = initialization.Constant(0)
+    lookup_action.name = "lookup_action"
     lookup_action.weights_init = initialization.IsotropicGaussian(0.1)
     lookup_action.biases_init = initialization.Constant(0)
     lookup_x.initialize()
@@ -100,5 +102,11 @@ def build_model(args, dtype=floatX):
     # Function to call to perfom a gradient descent on (y - Q)^2
     gradient_descent_step = theano.function(
         [x, action, y, lr], cost, updates=updates, allow_input_downcast=True)
+
+    # Load the good parameters
+    if args.load_path is not None:
+        param_values = load_parameter_values(args.load_path)
+        model = Model(cost)
+        model.set_parameter_values(param_values)
 
     return Q, gradient_descent_step, params
