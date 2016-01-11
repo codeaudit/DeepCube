@@ -2,12 +2,17 @@
 \usepackage{nips15submit_e,times}
 \usepackage{hyperref}
 \usepackage{url}
+\usepackage{caption}
+\usepackage{algorithm}
+\usepackage{float}
 \usepackage{algorithmic}
+\usepackage{graphicx}
 
+\newfloat{algorithm}{h}{lop}
 \title{Deep Q-Learning for Rubik's Cube}
 
 \author{
-Etienne Simon \\
+Etienne Simon\\
 ENS Cachan\\
 \texttt{esimon@esimon.eu} \\
 \And
@@ -62,7 +67,9 @@ When interacting with the environment, the algorithm stores the quadruplet $(x_t
 \subsubsection{Algorithm}
 The algorithm presented here is the same as the one in \cite{deepmind}
 
-\begin{algorithmic}
+\begin{algorithm}
+\captionof{algorithm}{Deep Q-Learning algorithm}
+\begin{algorithmic}[1]
 \STATE Initialize replay memory $\mathcal{D}$ to capacity $N$
 \STATE Initialize action-value function $Q$ with random weights
 %\State Require preprocessor $h(s)$ that maps histories to fixed-length representations.
@@ -87,16 +94,63 @@ The algorithm presented here is the same as the one in \cite{deepmind}
 \ENDFOR
 \ENDFOR
 \end{algorithmic}
+\end{algorithm}
 
 \subsection{Curriculum Learning}
 The basic idea to start learning easy things and to move on harder things is the core of what is called Curriculum Learning. Formalised in \cite{curriculum}, the article shows that some models can learn up to two times faster if the learning strategy follows some curriculum that show easy examples first, in comparison with a strategy that does not take care of the order of the examples.
 
-\section{Experiments}
+In our case, the easy examples are cubes almost finished and hard examples are completely shuffled cubes. When we show harder and harder examples to the model, we keep showing easy ones so that the network does not forget them. The procedure of Curriculum learning goes as follow:
+
+\begin{algorithm}
+\captionof{algorithm}{Curriculum Learning procedure}
+\begin{algorithmic}[1]
+\STATE Initialize the network with random weights
+\FOR{$c=1,C$}
+\STATE Train the network with intial cubes that are $1, 2, ..., c$ moves away from being finished.
+\STATE Save the parameters of the network
+
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+\section{Experimentation}
 
 The code is written in \textit{Python}. We have use the library \textit{Theano} which allows automatic differenciation and symbolic optimization. We have also used the convenient library \textit{Blocks} which is a Theano framework. One main feature about Theano is the fact that it can be run on Graphical Processing Units (GPU) in order to speed up the training. However, in our case we only used CPU computing because what takes the most time is not the computation of the gradient but rather the action that gives the highest utility value at a given state.
 
 
 \subsection{Practical considerations}
+
+\subsubsection{Rubik's Cube}
+\label{action}
+We have used the standard notations for the Rubik's cube. An action is a triplet of numbers $(f, l, d)$. When such an action is performed, it moves the layer $l$ parrallel to face $l$ through $d$ 90-degree turns in the clockwise direction. Layer $0$ is the face itself, and higher $l$ values are for layers deeper into the cube. Eventhough standard cubes have $N=3$ small cubies on the edge of every face, our code works for any value of $N$.
+
+\subsubsection{Input data for the Q-function and feedforward neural network}
+The state of a cube is given by its stickers : 3D matrix of shape $(6, N, N)$ of color values (numbers from $0$ to $5$). We have used one-hot encoding for the color value so that every color is as far every other color and so the state of a cube come represented as a 4D matrix with shape $(6, N, N, 6)$ where the last dimension contains a $1$ at the index of the color encoded and $0$ everywhere else. We then flatten this 4D matrix to form a 1D vector and concatenate it with a flattened version of the action (described in \ref{action}). The final vector contains then all the information from the state of the cube (the stickers colors) and the action taken.
+
+The vector described above is fed to a vanilla feedforward neural network. Our network has $1$ hidden layer containing $50$ units. The activation functions are Linear Rectifier ($f(x) = max(0, x)$).
+
+\subsubsection{Parameters of training and algorithm}
+For traning we have chosen a learning rate of $10^{-2}$. The value of $\epsilon$, the exploration parameter, is $0.2$ ($0.1$ is more standard but, we have observed the in our case we need a lot of exploration in order to successfully train the model). The discount factor $\gamma$ is equal to $0.9$. We have set the maximum storage of the replay memory at $20000$ and new examples replace randomly chosen old examples.
+
+\subsection{Experiments}
+The experiments follow obviously a coding phase of the environment and the algorithm.
+
+\subsubsection{Small Rubik's cube : $N=2$}
+The first step of the curriculum learning procedure tells to start with cubes that are one move away from being finished. While we thought this would be an easy first step for the program, it turned out that this very first step is not easy at all for the computer. It takes $100000$ iterations of the algorithm to go from $3$\% (initial full random) to about $20$\% of success as shown in the Figure \ref{firstfigure}.
+
+\begin{figure}[h]
+\begin{center}
+   \caption{\label{firstfigure} Training of the algorithm on cubes with $N=2$ that are 1 move away from being finished. X-axis represent the number of moves (and thus the number of updates of the parameters). Y-axis represent the moving average of success}
+   \includegraphics[scale=0.4]{firstfigure.png}
+\end{center}
+\end{figure}
+
+\section{Conclusion}
+This report presents the general Deep Q-learning algorithm and its adaptation for the Rubik's cube game. Despite the use of Curriculum Learning, the training of the model appears to be too slow ; it seems irealistic to have a Q-function that gives a good policy for the Rubik's cube with $N=3$ or more.
+
+\section{Acknowledgement}
+The authors would like to thank the developers of Theano and Blocks.
+
 
 \bibliographystyle{plain}
 \bibliography{biblio}
