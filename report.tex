@@ -2,12 +2,9 @@
 \usepackage{nips15submit_e,times}
 \usepackage{hyperref}
 \usepackage{url}
-% \documentstyle[nips14submit_09,times,art10]{article} 
-% For LaTeX 2.09
-
+\usepackage{algorithmic}
 
 \title{Deep Q-Learning for Rubik's Cube}
-
 
 \author{
 Etienne Simon \\
@@ -29,16 +26,16 @@ ENS Cachan \\
 \maketitle
 
 \begin{abstract}
-Deep Q-Learning is an algorithm that involves Q-Learning (well known Reinforcement Learning algorithm) and Deep Learning that have proved to be extremely succesfull for some applications (reference here). The Rubik's Cube is a solved game as there exists an algorithm that solves any suffled cube in the minimum number of moves, however we have applied a Deep Q-Learning algorithm to try to solve the Rubik's cube game. Because the reward is positive only when the cube is solved ans that the exploration grows exponentially, we have considered some tweaks for the algorithm such as curriculum learning. Mixed results have been obtain because of the slow convergence of the Q-learning algorithm.
+Deep Q-Learning is an algorithm which involves Q-Learning and Deep Learning. It has proved to be extremely succesfull for some applications \cite{deepmind}. The Rubik's Cube is a solved game as there exists an algorithm that solves any shuffled cube in the minimum number of moves, however we have applied a Deep Q-Learning algorithm to try to solve the Rubik's cube game. Because the reward is positive only when the cube is solved ans that the exploration grows exponentially, we have considered some tweaks for the algorithm such as curriculum learning. Mixed results have been obtain because of the slow convergence of the Q-learning algorithm.
 
 \end{abstract}
 
 \section{Introduction}
-From a Reinforcement Learning (RL) perspective, the Rubik's Cube game is hard because the reward is always zero, unless the cube is finished (same color on same face) which is a very improbable event if random moves are being taken from a suffled cube. Such situations are almost impossible to solve for classical Q-learning algorithms.
+From a Reinforcement Learning (RL) perspective, the Rubik's Cube game is hard because whatever the action taken, the reward will always be zero, unless the cube is finished (same color on same face) which is a very improbable event if random moves are being taken from a suffled cube. Such situations are almost impossible to solve for classical Q-learning algorithms.
 
 Here we consider a Deep Q-Learning algorithm that is a variant of the Q-Learning algorithm that uses a Feedforward Neural Network at the action-value function to be learned. Our hope is that the network learns patterns in the colors and the action in order to make possible the learning.
 
-Moreover, we want to help the learning by showing easy examples first (cubes almost finished) and the increase the complexity of the examples until we reach the general problem of a completely randomly shuffled cube. Such an approach is knows as Curriculum Learning (reference here).
+Moreover, we want to help the learning by showing easy examples first (cubes almost finished) and the increase the complexity of the examples until we reach the general problem of a completely randomly shuffled cube. Such an approach is knows as Curriculum Learning \cite{curriculum}.
 
 
 \section{Deep Q-learning algorithm}
@@ -51,265 +48,56 @@ Q-learning is a model-free reinforcement learning technique. It works by learnin
 
 \subsection{Deep Learning}
 
-The main specificity about Deep Q-Learning is that the action-value function is a feedforward neural network. The input of the network is a vector representing the state and the action taken and the output is the utility value. Feedforward neural networks have several advantages. First, they can approximate arbitrarily well any continuous function thanks to the universal approximation theorem (reference here). Moreover, the training on the parameters of feedforward neural networks has been made easy thanks to the backpropagation algorithm (reference here).
+The main specificity about Deep Q-Learning is that the action-value function is a feedforward neural network. The input of the network is a vector representing the state and the action taken and the output is the utility value. Feedforward neural networks have several advantages. First, they can approximate arbitrarily well any continuous function thanks to the universal approximation theorem \cite{universal}. Moreover, the training on the parameters of feedforward neural networks has been made easy thanks to the backpropagation algorithm \cite{backprop}.
 
-\subsection{The Deep Q-Learning algorithm in (reference here)}
+\subsection{The Deep Q-Learning algorithm in \cite{deepmind}}
 
+
+\subsubsection{Notations}
+For practical reasons, most of the notations used here are the same as in \cite{deepmind}. We note $\mathcal{D}$ the replay memory and $N$ its capacity. The action-value mapping is noted $Q$. $x_t$ denotes the state at time $t$, $a_t$ the action taken at time $t$, $r_t$ the observed reward and $x_{t+1}$ the resulting state. The parametrization of the deep learning model (the feedforward neural network) is represented by $\theta$.
+
+\subsubsection{A specificity : the Replay Memory}
+When interacting with the environment, the algorithm stores the quadruplet $(x_t, a_t, r_t, x_{t+1})$ in what is called a Replay Memory. Its purpose is to smooth the training over many past events and behaviors and not just what has just happened. This idea was first presented in \cite{replaymemory}. At every step of the algorithm, when training in involved, a minibatch of quadruplet is taken from the replay memory. The gradient is computed on this minibatch. Thus, we see that every episode that is contained in the replay memory can be used many times for the training. Moreover, the correlations between close actions and states do not bias the algorithm anymore since the minibatch is taken from random elements of the replay memory ; our hope is that the variance of the updates will be lower with such a procedure. A small variance means that the algorithm avoid to fall in poor local minima and to oscillates between pseudo-stable states.
+
+\subsubsection{Algorithm}
+The algorithm presented here is the same as the one in \cite{deepmind}
+
+\begin{algorithmic}
+\STATE Initialize replay memory $\mathcal{D}$ to capacity $N$
+\STATE Initialize action-value function $Q$ with random weights
+%\State Require preprocessor $h(s)$ that maps histories to fixed-length representations.
+\FOR{episode $=1,M$} 
+\STATE Initialise a shuffled cube $x_1$
+\FOR {$t=1,T$}
+	\STATE With probability $\epsilon$ select a random action $a_t$
+	\STATE otherwise select $a_t = \max_{a} Q(x_t, a; \theta)$
+	\STATE Execute action $a_t$ in emulator and observe reward $r_t$ and new state $x_{t+1}$
+	\STATE Store transition $\left(x_t,a_t,r_t,x_{t+1}\right)$ in the replay memory $\mathcal{D}$
+	%\For {$k=1$ to $K$}
+	\STATE Sample random minibatch of transitions $\left(x_j,a_j,r_j,x_{j+1}\right)$ from $\mathcal{D}$
+	\STATE Set
+	$y_j =
+    \left\{
+    \begin{array}{l l}
+      r_j  \quad & $for terminal $\phi_{j+1}\\
+      r_j + \gamma \max_{a'} Q(x_{j+1}, a'; \theta) \quad & $for non-terminal $\phi_{j+1}
+    \end{array} \right.$
+	\STATE Perform a gradient descent step on $\left(y_j - Q(x_j, a_j; \theta) \right)^2$ \footnote{The gradient is automaticaly computed with Theano}.
+	%\EndFor
+\ENDFOR
+\ENDFOR
+\end{algorithmic}
+
+\subsection{Curriculum Learning}
+The basic idea to start learning easy things and to move on harder things is the core of what is called Curriculum Learning. Formalised in \cite{curriculum}, the article shows that some models can learn up to two times faster if the learning strategy follows some curriculum that show easy examples first, in comparison with a strategy that does not take care of the order of the examples.
 
 \section{Experiments}
 
-python 
-theano
-blocks
-
-\section{Headings: first level}
+The code is written in \textit{Python}. We have use the library \textit{Theano} which allows automatic differenciation and symbolic optimization. We have also used the convenient library \textit{Blocks} which is a Theano framework. One main feature about Theano is the fact that it can be run on Graphical Processing Units (GPU) in order to speed up the training. However, in our case we only used CPU computing because what takes the most time is not the computation of the gradient but rather the action that gives the highest utility value at a given state.
 
 
-First level headings are lower case (except for first word and proper nouns),
-flush left, bold and in point size 12. One line space before the first level
-heading and 1/2~line space after the first level heading.
+\subsection{Practical considerations}
 
-\subsection{Headings: second level}
-
-Second level headings are lower case (except for first word and proper nouns),
-flush left, bold and in point size 10. One line space before the second level
-heading and 1/2~line space after the second level heading.
-
-\subsubsection{Headings: third level}
-
-Third level headings are lower case (except for first word and proper nouns),
-flush left, bold and in point size 10. One line space before the third level
-heading and 1/2~line space after the third level heading.
-
-\section{Citations, figures, tables, references}
-\label{others}
-
-These instructions apply to everyone, regardless of the formatter being used.
-
-\subsection{Citations within the text}
-
-Citations within the text should be numbered consecutively. The corresponding
-number is to appear enclosed in square brackets, such as [1] or [2]-[5]. The
-corresponding references are to be listed in the same order at the end of the
-paper, in the \textbf{References} section. (Note: the standard
-\textsc{Bib\TeX} style \texttt{unsrt} produces this.) As to the format of the
-references themselves, any style is acceptable as long as it is used
-consistently.
-
-As submission is double blind, refer to your own published work in the 
-third person. That is, use ``In the previous work of Jones et al.\ [4]'',
-not ``In our previous work [4]''. If you cite your other papers that
-are not widely available (e.g.\ a journal paper under review), use
-anonymous author names in the citation, e.g.\ an author of the
-form ``A.\ Anonymous''. 
-
-
-\subsection{Footnotes}
-
-Indicate footnotes with a number\footnote{Sample of the first footnote} in the
-text. Place the footnotes at the bottom of the page on which they appear.
-Precede the footnote with a horizontal rule of 2~inches
-(12~picas).\footnote{Sample of the second footnote}
-
-\subsection{Figures}
-
-All artwork must be neat, clean, and legible. Lines should be dark
-enough for purposes of reproduction; art work should not be
-hand-drawn. The figure number and caption always appear after the
-figure. Place one line space before the figure caption, and one line
-space after the figure. The figure caption is lower case (except for
-first word and proper nouns); figures are numbered consecutively.
-
-Make sure the figure caption does not get separated from the figure.
-Leave sufficient space to avoid splitting the figure and figure caption.
-
-You may use color figures. 
-However, it is best for the
-figure captions and the paper body to make sense if the paper is printed
-either in black/white or in color.
-\begin{figure}[h]
-\begin{center}
-%\framebox[4.0in]{$\;$}
-\fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
-\end{center}
-\caption{Sample figure caption.}
-\end{figure}
-
-\subsection{Tables}
-
-All tables must be centered, neat, clean and legible. Do not use hand-drawn
-tables. The table number and title always appear before the table. See
-Table~\ref{sample-table}.
-
-Place one line space before the table title, one line space after the table
-title, and one line space after the table. The table title must be lower case
-(except for first word and proper nouns); tables are numbered consecutively.
-
-\begin{table}[t]
-\caption{Sample table title}
-\label{sample-table}
-\begin{center}
-\begin{tabular}{ll}
-\multicolumn{1}{c}{\bf PART}  &\multicolumn{1}{c}{\bf DESCRIPTION}
-\\ \hline \\
-Dendrite         &Input terminal \\
-Axon             &Output terminal \\
-Soma             &Cell body (contains cell nucleus) \\
-\end{tabular}
-\end{center}
-\end{table}
-
-\section{Final instructions}
-Do not change any aspects of the formatting parameters in the style files.
-In particular, do not modify the width or length of the rectangle the text
-should fit into, and do not change font sizes (except perhaps in the
-\textbf{References} section; see below). Please note that pages should be
-numbered.
-
-\section{Preparing PostScript or PDF files}
-
-Please prepare PostScript or PDF files with paper size ``US Letter'', and
-not, for example, ``A4''. The -t
-letter option on dvips will produce US Letter files.
-
-Fonts were the main cause of problems in the past years. Your PDF file must
-only contain Type 1 or Embedded TrueType fonts. Here are a few instructions
-to achieve this.
-
-\begin{itemize}
-
-\item You can check which fonts a PDF files uses.  In Acrobat Reader,
-select the menu Files$>$Document Properties$>$Fonts and select Show All Fonts. You can
-also use the program \verb+pdffonts+ which comes with \verb+xpdf+ and is
-available out-of-the-box on most Linux machines.
-
-\item The IEEE has recommendations for generating PDF files whose fonts
-are also acceptable for NIPS. Please see
-\url{http://www.emfield.org/icuwb2010/downloads/IEEE-PDF-SpecV32.pdf}
-
-\item LaTeX users:
-
-\begin{itemize}
-
-\item Consider directly generating PDF files using \verb+pdflatex+
-(especially if you are a MiKTeX user). 
-PDF figures must be substituted for EPS figures, however.
-
-\item Otherwise, please generate your PostScript and PDF files with the following commands:
-\begin{verbatim} 
-dvips mypaper.dvi -t letter -Ppdf -G0 -o mypaper.ps
-ps2pdf mypaper.ps mypaper.pdf
-\end{verbatim}
-
-Check that the PDF files only contains Type 1 fonts. 
-%For the final version, please send us both the Postscript file and
-%the PDF file. 
-
-\item xfig "patterned" shapes are implemented with 
-bitmap fonts.  Use "solid" shapes instead. 
-\item The \verb+\bbold+ package almost always uses bitmap
-fonts.  You can try the equivalent AMS Fonts with command
-\begin{verbatim}
-\usepackage[psamsfonts]{amssymb}
-\end{verbatim}
- or use the following workaround for reals, natural and complex: 
-\begin{verbatim}
-\newcommand{\RR}{I\!\!R} %real numbers
-\newcommand{\Nat}{I\!\!N} %natural numbers 
-\newcommand{\CC}{I\!\!\!\!C} %complex numbers
-\end{verbatim}
-
-\item Sometimes the problematic fonts are used in figures
-included in LaTeX files. The ghostscript program \verb+eps2eps+ is the simplest
-way to clean such figures. For black and white figures, slightly better
-results can be achieved with program \verb+potrace+.
-\end{itemize}
-\item MSWord and Windows users (via PDF file):
-\begin{itemize}
-\item Install the Microsoft Save as PDF Office 2007 Add-in from
-\url{http://www.microsoft.com/downloads/details.aspx?displaylang=en\&familyid=4d951911-3e7e-4ae6-b059-a2e79ed87041}
-\item Select ``Save or Publish to PDF'' from the Office or File menu
-\end{itemize}
-\item MSWord and Mac OS X users (via PDF file):
-\begin{itemize}
-\item From the print menu, click the PDF drop-down box, and select ``Save
-as PDF...''
-\end{itemize}
-\item MSWord and Windows users (via PS file):
-\begin{itemize}
-\item To create a new printer
-on your computer, install the AdobePS printer driver and the Adobe Distiller PPD file from
-\url{http://www.adobe.com/support/downloads/detail.jsp?ftpID=204} {\it Note:} You must reboot your PC after installing the
-AdobePS driver for it to take effect.
-\item To produce the ps file, select ``Print'' from the MS app, choose
-the installed AdobePS printer, click on ``Properties'', click on ``Advanced.''
-\item Set ``TrueType Font'' to be ``Download as Softfont''
-\item Open the ``PostScript Options'' folder
-\item Select ``PostScript Output Option'' to be ``Optimize for Portability''
-\item Select ``TrueType Font Download Option'' to be ``Outline''
-\item Select ``Send PostScript Error Handler'' to be ``No''
-\item Click ``OK'' three times, print your file.
-\item Now, use Adobe Acrobat Distiller or ps2pdf to create a PDF file from
-the PS file. In Acrobat, check the option ``Embed all fonts'' if
-applicable.
-\end{itemize}
-
-\end{itemize}
-If your file contains Type 3 fonts or non embedded TrueType fonts, we will
-ask you to fix it. 
-
-\subsection{Margins in LaTeX}
- 
-Most of the margin problems come from figures positioned by hand using
-\verb+\special+ or other commands. We suggest using the command
-\verb+\includegraphics+
-from the graphicx package. Always specify the figure width as a multiple of
-the line width as in the example below using .eps graphics
-\begin{verbatim}
-   \usepackage[dvips]{graphicx} ... 
-   \includegraphics[width=0.8\linewidth]{myfile.eps} 
-\end{verbatim}
-or % Apr 2009 addition
-\begin{verbatim}
-   \usepackage[pdftex]{graphicx} ... 
-   \includegraphics[width=0.8\linewidth]{myfile.pdf} 
-\end{verbatim}
-for .pdf graphics. 
-See section 4.4 in the graphics bundle documentation (\url{http://www.ctan.org/tex-archive/macros/latex/required/graphics/grfguide.ps}) 
- 
-A number of width problems arise when LaTeX cannot properly hyphenate a
-line. Please give LaTeX hyphenation hints using the \verb+\-+ command.
-
-
-\subsubsection*{Acknowledgments}
-
-Use unnumbered third level headings for the acknowledgments. All
-acknowledgments go at the end of the paper. Do not include 
-acknowledgments in the anonymized submission, only in the 
-final paper. 
-
-\subsubsection*{References}
-
-References follow the acknowledgments. Use unnumbered third level heading for
-the references. Any choice of citation style is acceptable as long as you are
-consistent. It is permissible to reduce the font size to `small' (9-point) 
-when listing the references. {\bf Remember that this year you can use
-a ninth page as long as it contains \emph{only} cited references.}
-
-\small{
-[1] Alexander, J.A. \& Mozer, M.C. (1995) Template-based algorithms
-for connectionist rule extraction. In G. Tesauro, D. S. Touretzky
-and T.K. Leen (eds.), {\it Advances in Neural Information Processing
-Systems 7}, pp. 609-616. Cambridge, MA: MIT Press.
-
-[2] Bower, J.M. \& Beeman, D. (1995) {\it The Book of GENESIS: Exploring
-Realistic Neural Models with the GEneral NEural SImulation System.}
-New York: TELOS/Springer-Verlag.
-
-[3] Hasselmo, M.E., Schnell, E. \& Barkai, E. (1995) Dynamics of learning
-and recall at excitatory recurrent synapses and cholinergic modulation
-in rat hippocampal region CA3. {\it Journal of Neuroscience}
-{\bf 15}(7):5249-5262.
-}
-
+\bibliographystyle{plain}
+\bibliography{biblio}
 \end{document}

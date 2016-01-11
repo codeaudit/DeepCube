@@ -1,0 +1,30 @@
+\begin{thebibliography}{1}
+
+\bibitem{curriculum}
+Yoshua Bengio, J{\'e}r{\^o}me Louradour, Ronan Collobert, and Jason Weston.
+\newblock Curriculum learning.
+\newblock In {\em Proceedings of the 26th annual international conference on
+  machine learning}, pages 41--48. ACM, 2009.
+
+\bibitem{universal}
+Bal{\'a}zs~Csan{\'a}d Cs{\'a}ji.
+\newblock Approximation with artificial neural networks.
+\newblock {\em Faculty of Sciences, Etvs Lornd University, Hungary}, 24, 2001.
+
+\bibitem{replaymemory}
+Long-Ji Lin.
+\newblock Reinforcement learning for robots using neural networks.
+\newblock Technical report, DTIC Document, 1993.
+
+\bibitem{deepmind}
+Volodymyr Mnih, Koray Kavukcuoglu, David Silver, Alex Graves, Ioannis
+  Antonoglou, Daan Wierstra, and Martin Riedmiller.
+\newblock Playing atari with deep reinforcement learning.
+\newblock {\em arXiv preprint arXiv:1312.5602}, 2013.
+
+\bibitem{backprop}
+David~E Rumelhart, Geoffrey~E Hinton, and Ronald~J Williams.
+\newblock Learning representations by back-propagating errors.
+\newblock {\em Cognitive modeling}, 5:3, 1988.
+
+\end{thebibliography}
