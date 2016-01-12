@@ -104,7 +104,7 @@ if __name__ == "__main__":
     # Printing
     current_episode_century = 0
     count = 0
-    for episode in range(M):
+    for episode in range(args.max_replay_memory):
         # Initialize a random cube
         env = Environment(N)
 
@@ -112,29 +112,28 @@ if __name__ == "__main__":
 
         # Show good examples in the replay memory with probability
         # "good_examples"
-        r = np.random.uniform(0., 1., 1)
-        if r < args.good_examples:
-            for i, move in enumerate(reversed(moves)):
-                r_move = reverse_action(move)
+        for i, move in enumerate(reversed(moves)):
+            r_move = reverse_action(move)
 
-                # Make the move
-                if i == 0:
-                    x_t = np.copy(env.get_state())
-                    y_t = np.copy(env.get_state())
-                else:
-                    x_t = np.copy(x_tp1)
-                    y_t = np.copy(x_tp1)
-                cube = Cube(stickers=y_t)
-                cube.move(r_move[0], r_move[1], r_move[2])
-                x_tp1 = np.copy(cube.stickers)
+            # Make the move
+            if i == 0:
+                x_t = np.copy(env.get_state())
+                y_t = np.copy(env.get_state())
+            else:
+                x_t = np.copy(x_tp1)
+                y_t = np.copy(x_tp1)
+            cube = Cube(stickers=y_t)
+            cube.move(r_move[0], r_move[1], r_move[2])
+            x_tp1 = np.copy(cube.stickers)
 
-                # Compute reward
-                reward = args.gamma ** (len(moves) - i - 1)
+            # Compute reward
+            reward = args.gamma ** (len(moves) - i - 1)
 
-                fill_replay_memory(replay_memory,
-                                   args.max_replay_memory,
-                                   [x_t, r_move, reward, x_tp1])
+            fill_replay_memory(replay_memory,
+                               args.max_replay_memory,
+                               [x_t, r_move, reward, x_tp1])
 
+    for episode in range(M):
         finish_episode = False
         t = 0
         while (t < T) and not finish_episode:
@@ -179,15 +178,6 @@ if __name__ == "__main__":
             action[1] += 6
             action[2] += 6 + N - 1
 
-            # Add the episode to the replay memory
-            replay_memory = fill_replay_memory(replay_memory,
-                                               args.max_replay_memory,
-                                               [x_t, action, reward, x_tp1])
-
-            # If the replay_memory is not big enough to take a minibatch
-            if len(replay_memory) < mb_size:
-                continue
-
             # Sample some mini-batches of the Replay_Memory
             # x_t and x_tp1 are 4D matrices (batch, 3D of the cube)
             # a is 2 D (batch, actions)
@@ -195,7 +185,7 @@ if __name__ == "__main__":
             [x_t, a, r, x_tp1] = sample_minibatch(replay_memory, mb_size, N)
             # Make x 2d (batch, flattened cube)
             x_t = x_t.reshape(x_t.shape[0], 6 * (N ** 2))
-            x_tp1 = x_tp1.reshape(x_tp1.shape[0], 6 * (N ** 2))
+            x_tp1 = x_tp1.reshape(x_tp1.shape[0], é6 * (N ** 2))
 
             # Compute y_j for all j in the minibatch
             # y_j = r_j if the state x_t+1 is terminal (r_j = 1)

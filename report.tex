@@ -31,7 +31,7 @@ ENS Cachan \\
 \maketitle
 
 \begin{abstract}
-Deep Q-Learning is an algorithm which involves Q-Learning and Deep Learning. It has proved to be extremely succesfull for some applications \cite{deepmind}. The Rubik's Cube is a solved game as there exists an algorithm that solves any shuffled cube in the minimum number of moves, however we have applied a Deep Q-Learning algorithm to try to solve the Rubik's cube game. Because the reward is positive only when the cube is solved ans that the exploration grows exponentially, we have considered some tweaks for the algorithm such as curriculum learning. Mixed results have been obtain because of the slow convergence of the Q-learning algorithm.
+Deep Q-Learning is an algorithm which involves Q-Learning and Deep Learning. It has proved to be extremely succesfull for some applications \cite{deepmind}. The Rubik's Cube is a solved game as there exists an algorithm that solves any shuffled cube in a minimum number of moves, however we have applied a Deep Q-Learning algorithm to try to solve the Rubik's cube game. Because the reward is positive only when the cube is solved and because the exploration grows exponentially, we have considered some tweaks for the algorithm such as curriculum learning. Mixed results have been obtain because of the slow convergence of the Q-learning algorithm and of the poor capacity of the Network to generalize between colors and faces.
 
 \end{abstract}
 
@@ -136,17 +136,19 @@ For traning we have chosen a learning rate of $10^{-2}$. The value of $\epsilon$
 The experiments follow obviously a coding phase of the environment and the algorithm.
 
 \subsubsection{Small Rubik's cube : $N=2$}
-The first step of the curriculum learning procedure tells to start with cubes that are one move away from being finished. While we thought this would be an easy first step for the program, it turned out that this very first step is not easy at all for the computer. It takes $100000$ iterations of the algorithm to go from $3$\% (initial full random) to about $20$\% of success as shown in the Figure \ref{firstfigure}.
+The first step of the curriculum learning procedure tells to start with cubes that are one move away from being finished. While we thought this would be an easy first step for the program, it turned out that this very first step is not easy at all for the computer as it takes a lot of time to converge. On this experiments takes $100000$ iterations (3 hours of training) of the algorithm to go from $3$\% (initial full random) to about $20$\% of success as shown in the Figure \ref{firstfigure}.
 
 \begin{figure}[h]
 \begin{center}
-   \caption{\label{firstfigure} Training of the algorithm on cubes with $N=2$ that are 1 move away from being finished. X-axis represent the number of moves (and thus the number of updates of the parameters). Y-axis represent the moving average of success}
    \includegraphics[scale=0.4]{firstfigure.png}
-\end{center}
+   \caption{\label{firstfigure} Training of the algorithm on cubes with $N=2$ that are 1 move away from being finished. X-axis represent the number of moves (and thus the number of updates of the parameters). Y-axis represent the moving average of success}
+   \end{center}
 \end{figure}
 
-\section{Conclusion}
-This report presents the general Deep Q-learning algorithm and its adaptation for the Rubik's cube game. Despite the use of Curriculum Learning, the training of the model appears to be too slow ; it seems irealistic to have a Q-function that gives a good policy for the Rubik's cube with $N=3$ or more.
+\section{Conclusion and future work}
+This report presents the general Deep Q-learning algorithm and its adaptation for the Rubik's cube game. Despite the use of Curriculum Learning, the training of the model appears to be too slow ; it seems irealistic to have a Q-function that gives a good policy for the Rubik's cube with $N=3$ or more. We think that Deep Q-learning is not very appropriate for the Rubik's cube game as the neural network will have much troubles to generalize the patterns between the colors and the different faces and it can get easily lost in the exploration because the reward is only given at the end. Maybe is Deep Q-learning more approriate for problems where the environment is stochastic, such as the one in some games of \cite{deepmind}.
+
+In order to tackle the problem of generalisation among faces and colors, a future idea is to design a network that does not make distinction between the orientation of the faces and between the permutation of the colors. We believe that this could help to learn faster.
 
 \section{Acknowledgement}
 The authors would like to thank the developers of Theano and Blocks.

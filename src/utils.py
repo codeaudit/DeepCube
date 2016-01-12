@@ -19,7 +19,7 @@ def parse_args():
     # Qlearning options
     # The number of permutations from a finished cube to get the initial cube
     parser.add_argument('--rand_nb', type=int,
-                        default=2)
+                        default=3)
     parser.add_argument('--epsilon', type=float,
                         default=0.2)    # The probability of taking a random move
     parser.add_argument('--gamma', type=float,
@@ -27,9 +27,9 @@ def parse_args():
     parser.add_argument('--nb_episode', type=int,
                         default=100000)     # Number of considered episodes
     parser.add_argument('--steps_in_episode', type=int,
-                        default=2)     # Number of steps in an episode
+                        default=4)     # Number of steps in an episode
     parser.add_argument('--max_replay_memory', type=int,
-                        default=20000) # The maximum things to store in the replay memory
+                        default=60000) # The maximum things to store in the replay memory
     parser.add_argument('--good_examples', type=float,
                         default=0.8)
 
@@ -37,9 +37,9 @@ def parse_args():
     parser.add_argument('--embed_dim', type=int,
                         default=2)   # The dimension of the embedding for every color
     parser.add_argument('--layers', type=int,
-                        default=2)
+                        default=4)
     parser.add_argument('--units_per_layer', type=int,
-                        default=50)
+                        default=150)
 
     # Serialization options
     parser.add_argument('--load_path', type=str,
