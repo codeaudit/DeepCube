@@ -114,7 +114,7 @@ In our case, the easy examples are cubes almost finished and hard examples are c
 \end{algorithm}
 
 \subsection{Showing how to solve a Rubik's Cube}
-On the early experiments we have run, it turned out that it was impossible to let the cube explore the space from it's initial position : there is very little chance that it reaches the final state. To tackle this problem, we showed, many times, how to solve the cube from various positions. In practice, we did intialize the replay memory with many of such examples so that the  network knows roughly as many \textit{good examples} and than it know \textit{bad examples}.
+On the early experiments we have run, it turned out that it was impossible to let the cube explore the space from it's initial position : there is very little chance that it reaches the final state. To tackle this problem, we showed, many times, how to solve the cube from various positions. In practice, we did intialize the replay memory with many of such examples so that the  network knows roughly as many \textit{good examples} as than it knows \textit{bad examples}.
 
 
 \section{Experimentation}
@@ -130,7 +130,7 @@ We have used the standard notations for the Rubik's cube. An action is a triplet
 \subsubsection{Input data for the Q-function and feedforward neural network}
 The state of a cube is given by its stickers : 3D matrix of shape $(6, N, N)$ of color values (numbers from $0$ to $5$). We have used one-hot encoding for the color value so that every color is as far every other color and so the state of a cube come represented as a 4D matrix with shape $(6, N, N, 6)$ where the last dimension contains a $1$ at the index of the color encoded and $0$ everywhere else. We then flatten this 4D matrix to form a 1D vector and concatenate it with a flattened version of the action (described in \ref{action}). The final vector contains then all the information from the state of the cube (the stickers colors) and the action taken.
 
-The vector described above is fed to a vanilla feedforward neural network. Our network has $3$ hidden layer containing $150$ units each. The activation functions are Linear Rectifier ($f(x) = max(0, x)$).
+The vector described above is fed to a vanilla feedforward neural network. Our network has $3$ hidden layer containing $150$ units each. The activation functions are Linear Rectifier ($f(x) = max(0, x)$). This network is quite big and implies a slower training. However, early experiments run on a smaller network were not successful and indicate that the neural network needs to be big enough.
 
 \subsubsection{Parameters of training and algorithm}
 For traning we have chosen a learning rate of $10^{-2}$. The value of $\epsilon$, the exploration parameter, is $0.2$ ($0.1$ is more standard but, we have observed the in our case we need a lot of exploration in order to successfully train the model). The discount factor $\gamma$ is equal to $0.9$. We have set the maximum storage of the replay memory at $20000$ and new examples replace randomly chosen old examples.
@@ -139,21 +139,22 @@ For traning we have chosen a learning rate of $10^{-2}$. The value of $\epsilon$
 The experiments follow obviously a coding phase of the environment and the algorithm.
 
 \subsubsection{Small Rubik's cube : $N=2$}
-The first step of the curriculum learning procedure tells to start with cubes that are one move away from being finished. While we thought this would be an easy first step for the program, it turned out that this very first step is not easy at all for the computer as it takes a lot of time to converge. On this experiments, it takes $100000$ iterations (4 hours of training) of the algorithm to go from $3$\% (initial full random) to about $20$\% of success as shown in the Figure \ref{firstfigure}. We don't want the network to full train on this task because it will to learn more complicated task soon ; the aim is to simply initiate the training.
+The first step of the curriculum learning procedure tells to start with cubes that are one move away from being finished. While we thought this would be an easy first step for the program, it turned out that this very first step is not easy at all for the computer as it takes a lot of time to converge. On this experiments, it takes $100000$ iterations (4 hours of training) of the algorithm to go from $3$\% (initial full random) to about $29$\% of success as shown in the Figure \ref{firstfigure}. We don't want the network to full train on this task because it will to learn more complicated task soon ; the aim is to simply initiate the training.
 
 \begin{figure}[h]
 \begin{center}
-   \includegraphics[scale=0.3]{firstfigure.png}
+   \includegraphics[scale=0.23]{firstfigure.png}
    \caption{\label{firstfigure} Training of the algorithm on cubes with $N=2$ that are 1 move away from being finished. X-axis represent the number of moves (and thus the number of updates of the parameters). Y-axis represent the moving average of success}
    \end{center}
 \end{figure}
-
 
 We kept training the network on a more complicated task, when the cubes are 2 moves away from being  finished. Of course we initialized the weights of the network with the one of the previous experiment. After 100000 iterations (8 hours of training) the network achives $39$\% of success.
 
 We iterated the process again on cubes that are 4 moves away from being finished. After 100000 updates of the weights (14 hours of training), the network achieves $44$\% of success.
 
+Given the time taken by the algorithm and the mixed results on a Cube with $N=2$ we did not try on a bigger Cube, like the standard $N=3$ Cube. 
 
+\subsubsection{On the importance of Curriculum Learning}
 Graphic about the importance of curriculum learning (without and with)
 44 \% for 4
 
