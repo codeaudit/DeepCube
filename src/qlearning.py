@@ -131,6 +131,10 @@ if __name__ == "__main__":
                 # Compute reward
                 reward = args.gamma ** (len(moves) - i - 1)
 
+                # Shift action
+                r_move[1] += 6
+                r_move[2] += 6 + N -1
+
                 fill_replay_memory(replay_memory,
                                    args.max_replay_memory,
                                    [x_t, r_move, reward, x_tp1])

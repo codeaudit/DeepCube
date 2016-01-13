@@ -57,6 +57,7 @@ class max_action_Q(object):
         flag_first = True
         for a in self.possible_actions:
             temp = self.Q(x, a)
+            print temp
             if flag_first:
                 flag_first = False
                 max_q = temp
@@ -101,17 +102,12 @@ if __name__ == "__main__":
     Q, gradient_descent_step, params = build_model(args)
     max_action = max_action_Q(N, Q)
 
-    # Printing
-    current_episode_century = 0
-    count = 0
     for episode in range(args.max_replay_memory):
         # Initialize a random cube
         env = Environment(N)
 
         moves = env.suffle(rand_nb=rand_nb)
 
-        # Show good examples in the replay memory with probability
-        # "good_examples"
         for i, move in enumerate(reversed(moves)):
             r_move = reverse_action(move)
 
@@ -129,34 +125,39 @@ if __name__ == "__main__":
             # Compute reward
             reward = args.gamma ** (len(moves) - i - 1)
 
+            # Shift action
+            r_move[1] += 6
+            r_move[2] += 6 + N -1
+
             fill_replay_memory(replay_memory,
                                args.max_replay_memory,
                                [x_t, r_move, reward, x_tp1])
 
+    # Printing
+    current_episode_century = 0
+    count = 0
     for episode in range(M):
+        # Initialize a random cube
+        env = Environment(N)
+
+        moves = env.suffle(rand_nb=rand_nb)
+
         finish_episode = False
         t = 0
         while (t < T) and not finish_episode:
             x_t = np.copy(env.get_state())
 
-            # Select random action with probability eps
-            # Or select action that maximize Q(x_t, a)
-            # Execute the action and get reward
-            r = np.random.uniform(0., 1., 1)
-            if r < eps:
-                action = env.random_action()
-            else:
-                stickers = env.get_state()
-                stickers = stickers.flatten()
-                stickers = stickers[None, :]
-                action, max_q = max_action(stickers)
-                action = action[0, :]
+            stickers = env.get_state()
+            stickers = stickers.flatten()
+            stickers = stickers[None, :]
+            action, max_q = max_action(stickers)
+            action1 = action[0, :]
 
-                # Shift back the action
-                action[1] += -6
-                action[2] += -6 - N + 1
+            # Shift back the action
+            action1[1] += -6
+            action1[2] += -6 - N + 1
 
-            reward = env.perform_action(action)
+            reward = env.perform_action(action1)
             if reward:
                 finish_episode = True
 
@@ -171,12 +172,9 @@ if __name__ == "__main__":
                 sys.stdout.write("%d : score = %d\r" % (episode / 100, count))
                 sys.stdout.flush()
 
-            x_tp1 = np.copy(env.get_state())
-
-            # Store transition s_t, a_t, r_t, s_t+1 in the Replay_Memory
-            # The shifted action is stored
-            action[1] += 6
-            action[2] += 6 + N - 1
+            # If the replay_memory is not big enough to take a minibatch
+            if len(replay_memory) < mb_size:
+                continue
 
             # Sample some mini-batches of the Replay_Memory
             # x_t and x_tp1 are 4D matrices (batch, 3D of the cube)
@@ -185,7 +183,7 @@ if __name__ == "__main__":
             [x_t, a, r, x_tp1] = sample_minibatch(replay_memory, mb_size, N)
             # Make x 2d (batch, flattened cube)
             x_t = x_t.reshape(x_t.shape[0], 6 * (N ** 2))
-            x_tp1 = x_tp1.reshape(x_tp1.shape[0], é6 * (N ** 2))
+            x_tp1 = x_tp1.reshape(x_tp1.shape[0], 6 * (N ** 2))
 
             # Compute y_j for all j in the minibatch
             # y_j = r_j if the state x_t+1 is terminal (r_j = 1)
